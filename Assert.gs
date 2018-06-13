@@ -4,7 +4,7 @@
 // Unit Tests: 22 March 2015 13:00 GMT
 
 /*
- * Copyright (C) 2014 Andrew Roberts
+ * Copyright (C) 2014-2018 Andrew Roberts
  * 
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -30,10 +30,7 @@
 // Assert.handleError().
 
 // TODO - Reword this to allow for not passing in the function name, just a string.
-// TODO - Make it possible to display 'internal error' in a dialog, but see the 
-// actual error in the Log
 // TODO - Make calling function last param
-// TODO - Add option to email admin about the error
 
 var HandleError = Object.freeze({
 
@@ -42,34 +39,128 @@ var HandleError = Object.freeze({
   
   // Try to display it to the user if that is possible within the context the 
   // script is running, for example in a spreadsheet
-  DISPLAY: 'display',
+  
+  // Display the full error message
+  DISPLAY_FULL: 'displayFull',
+  
+  // Display only the user portion of the messgage
+  DISPLAY_SHORT: 'displayShort',
   
   // Simply return (the caller will already have the error message)
   RETURN: 'return',
   
 })
 
-var config_ 
+var DEFAULT_INTERNAL_ERROR_MESSAGE = 'Internal error - contact IT department.'
+
+// Public Functions
+// ----------------
 
 /**
- * Initialise the Assert library
+ * Handle an error. This is only called from the top level of 
+ * the script, everything else should throw an error which 
+ * will be caught at the top-level and handled by this function.
  *
- * @param {object} config {
- *   handleError {HandleError} 
- *   sendErrorEmail {boolean}
- *   emailAddress {string}
- *   scriptName {string}
- *   scriptVersion {string}
- * }
+ * @param {object} 
+ *   {Error} error                 Error object   
+ *   {string} userMessage          User message 
+ *   {object} log                  Logging object
+ *   {HandleError} handleError     How to handle the error
+ *   {boolean} sendErrorEmail      Whether to send an error notification email
+ *   {string} emailAddress         Where to send the email
+ *   {string} internalErrorMessage 
+ *   {string} scriptName           
+ *   {string} scriptVersion        
  */
-  
-// TODO - Add parameter checking see the Log library  
-  
-function init(config) {
 
-  config_ = config
-     
-} // init()
+function handleError(config) {
+    
+  var functionName = 'handleError()'
+  
+  //TODO - Error checking
+    
+  if (typeof config === 'undefined') {
+    throw new TypeError('No config')
+  }
+
+  //TODO - Use defaults - see BBLog
+
+  var error = config.error
+  var userMessage = config.userMessage || ''
+  var internalErrorMessage = config.internalErrorMessage || DEFAULT_INTERNAL_ERROR_MESSAGE
+  var log = config.log 
+  var fullErrorMessage = ''
+
+  if (error instanceof Error) {
+  
+    fullErrorMessage = 'user message:' + userMessage + ' - ' +
+      'name: ' + error.name + ' - ' +
+      'error message: ' + error.message + '\n\n' + 
+      'fileName: ' + error.fileName + ' - ' + 
+      'lineNumber: ' + error.lineNumber + ' - ' +     
+      'stack: ' + error.stack
+      
+  } else {  
+    throw new Error (functionName + ' - first arg not an Error')
+  }
+    
+  if (typeof log !== 'undefined') { 
+    log.severe(fullErrorMessage)
+  }
+  
+  if (config.sendErrorEmail) {
+    
+    MailApp.sendEmail(
+      config.emailAddress, 
+      'Error thrown in ' + config.scriptName + ', ' + 
+        config.scriptVersion, 
+      'Error: ' + fullErrorMessage)
+  }
+
+  var hyphen = ' - '  
+
+  switch (config.handleError) {
+  
+    case HandleError.DISPLAY_FULL:
+    
+      // TODO - Shouldn't we be doing some of the error checking like below??
+      Dialog.init(config.log)
+      Dialog.show(userMessage, error.message)
+      break
+
+    case HandleError.DISPLAY_SHORT:
+
+      Dialog.init(config.log)
+      Dialog.show(userMessage, internalErrorMessage)
+      break
+      
+    case HandleError.THROW:
+      
+      if (Util_.isUndefined(userMessage)) {
+        
+        userMessage = ''
+        hyphen = ''
+        
+      } else {
+        
+        if (!Util_.isString(userMessage)) {
+          throw new Error(functionName + ' - second arg not a string')
+        }
+      }
+      
+      // Tag the user message on and re-throw
+      error.message += hyphen + userMessage 
+      throw error
+      
+    case HandleError.RETURN:
+      return
+      
+    default:
+      throw new Error(functionName + ' - bad HandleError')
+    
+  } // switch (config.handleError)
+  
+} // handleError()
 
 /**
  * Assert the passed condition is true.
@@ -203,95 +294,6 @@ function assertBoolean(test, callingfunction, message) {
   assert(Util_.isBoolean(test), callingfunction, message)
   
 } // assertDate()
-
-// Error functions called at top level
-// -----------------------------------
-
-/**
- * Handle an error. This is only called from the top level of 
- * the script, everything else should throw an error which 
- * will be caught at the top-level and handled by this function.
- *
- * @param {Error} error Error object
- * @param {string} message string
- * @param {object} log Logging object
- */
-
-function handleError(error, message, log) {
-    
-  var functionName = 'handleError()'
-  
-  if (typeof config_ === 'undefined') {
-    throw new Error('Assert library not initialised. Call Assert.init() first')
-  }
-
-  var hyphen = ' - '  
-  var fullErrorMessage = ''
-  Dialog.init(log)
-
-  if (error instanceof Error && typeof log !== 'undefined') {
-  
-    fullErrorMessage = 'user message:' + message + ' - ' +
-      'name: ' + error.name + ' - ' +
-      'error message: ' + error.message + '\n\n' + 
-      'fileName: ' + error.fileName + ' - ' + 
-      'lineNumber: ' + error.lineNumber + ' - ' +     
-      'stack: ' + error.stack
-    
-    log.severe(fullErrorMessage)
-  }
-  
-  if (config_.sendErrorEmail) {
-    
-    MailApp.sendEmail(
-      config_.emailAddress, 
-      'Error thrown in ' + config_.scriptName + ', ' + 
-        config_.scriptVersion, 
-      'Error: ' + fullErrorMessage)
-  }
-    
-  switch (config_.handleError) {
-  
-  case HandleError.DISPLAY:
-  
-    // TODO - Shouldn't we be doing some of the error checking like below??
-  
-    Dialog.show(message, error.message)
-    break
-    
-  case HandleError.THROW:
-    
-    if (!(error instanceof Error)) {
-      handleError(new TypeError(functionName + ' - first arg not an Error'))
-    }
-    
-    if (Util_.isUndefined(message)) {
-      
-      message = ''
-      hyphen = ''
-      
-    } else {
-      
-      if (!Util_.isString(message)) {
-        
-        handleError(new TypeError(functionName + ' - second arg not a string'))
-      }
-    }
-    
-    // Tag the user message on
-    error.message += hyphen + message 
-    
-    throw error
-    
-  case HandleError.RETURN:
-    return
-    
-  default:
-    throw new TypeError(functionName + ' - Invalid HandleError, has init() been called?')
-    
-  }
-  
-} // handleError()
 
 // Error functions called at low-level
 // -----------------------------------

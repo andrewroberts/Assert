@@ -4,7 +4,7 @@
     "libraries": [{
       "userSymbol": "Dialog",
       "libraryId": "1zEZzCZxV-i91zf1OCOn6-wT4kTY1lco2dkAZuyZJSpHq3CkJM6OSNH__",
-      "version": "4"
+      "version": "6"
     }]
   },
   "exceptionLogging": "STACKDRIVER"

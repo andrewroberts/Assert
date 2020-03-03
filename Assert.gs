@@ -293,7 +293,21 @@ function assertBoolean(test, callingfunction, message) {
 
   assert(Util_.isBoolean(test), callingfunction, message)
   
-} // assertDate()
+} // assertBoolean()
+
+/**
+ * Assert that two objects are equal
+ *
+ * @param {string} test value to test
+ * @param {string} callingfunction calling function name
+ * @param {string} message error message if it fails
+ */
+
+function objectsAreEqual(obj, callingfunction, message) {
+
+  assert(Util_.objectsAreEqual(obj), callingfunction, message)
+  
+} // objectsAreEqual()
 
 // Error functions called at low-level
 // -----------------------------------

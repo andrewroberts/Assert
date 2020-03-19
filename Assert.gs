@@ -91,18 +91,12 @@ function handleError(config) {
   var log = config.log 
   var fullErrorMessage = ''
 
-  if (error instanceof Error) {
-  
-    fullErrorMessage = 'user message:' + userMessage + ' - ' +
-      'name: ' + error.name + ' - ' +
-      'error message: ' + error.message + '\n\n' + 
-      'fileName: ' + error.fileName + ' - ' + 
-      'lineNumber: ' + error.lineNumber + ' - ' +     
-      'stack: ' + error.stack
-      
-  } else {  
-    throw new Error (functionName + ' - first arg not an Error')
-  }
+  fullErrorMessage = 'user message:' + userMessage + ' - ' +
+    'name: ' + error.name + ' - ' +
+    'error message: ' + error.message + '\n\n' + 
+    'fileName: ' + error.fileName + ' - ' + 
+    'lineNumber: ' + error.lineNumber + ' - ' +     
+    'stack: ' + error.stack     
     
   if (typeof log !== 'undefined') { 
     log.severe(fullErrorMessage)

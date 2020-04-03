@@ -74,7 +74,7 @@ var Util_ = {
 		switch (typeof (obj1[p])) {
 			//Deep compare objects
 			case 'object':
-				if (!Util_.objectsAreEqual(obj1[p], obj2[p])) return false;
+				if (!Util_.objectsAreEqual({obj1: obj1[p], obj2: obj2[p]})) return false;
 				break;
 			//Compare function code
 			case 'function':

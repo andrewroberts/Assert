@@ -34,16 +34,19 @@
 
 var HandleError = Object.freeze({
 
-  // Throw the error
+  // Throw the full error
   THROW: 'throw',  
-  
+
+  // Just throw the user portion of the error plus internalErrorMessage
+  THROW_SHORT: 'throwShort',  
+
   // Try to display it to the user if that is possible within the context the 
   // script is running, for example in a spreadsheet
   
-  // Display the full error message
+  // Display the full error message using Dialog
   DISPLAY_FULL: 'displayFull',
   
-  // Display only the user portion of the messgage
+  // Display only the user portion of the messgage using Dialog
   DISPLAY_SHORT: 'displayShort',
   
   // Simply return (the caller will already have the error message)
@@ -68,7 +71,7 @@ var DEFAULT_INTERNAL_ERROR_MESSAGE = 'Internal error - contact IT department.'
  *   {HandleError} handleError     How to handle the error
  *   {boolean} sendErrorEmail      Whether to send an error notification email
  *   {string} emailAddress         Where to send the email
- *   {string} internalErrorMessage 
+ *   {string} internalErrorMessage The error to display to the user, if the actual internal error is hidden from them
  *   {string} scriptName           
  *   {string} scriptVersion        
  */
@@ -111,8 +114,6 @@ function handleError(config) {
       'Error: ' + fullErrorMessage)
   }
 
-  var hyphen = ' - '  
-
   switch (config.handleError) {
   
     case HandleError.DISPLAY_FULL:
@@ -130,22 +131,20 @@ function handleError(config) {
       
     case HandleError.THROW:
       
-      if (Util_.isUndefined(userMessage)) {
-        
-        userMessage = ''
-        hyphen = ''
-        
-      } else {
-        
-        if (!Util_.isString(userMessage)) {
-          throw new Error(functionName + ' - second arg not a string')
-        }
-      }
+      var message = getUserMessage()
       
       // Tag the user message on and re-throw
-      error.message += hyphen + userMessage 
+      error.message += message.hyphen + message.userMessage 
       throw error
+  
+    case HandleError.THROW_SHORT:
       
+      var message = getUserMessage()
+      
+      // Tag the user message on and re-throw
+      error.message = internalErrorMessage + message.hyphen + message.userMessage 
+      throw error
+
     case HandleError.RETURN:
       return
       
@@ -154,6 +153,30 @@ function handleError(config) {
     
   } // switch (config.handleError)
   
+  // Private Functions
+  // -----------------
+  
+  function getUserMessage() {
+      
+    var hyphen = ' - '  
+      
+    if (Util_.isUndefined(userMessage)) {
+      
+      userMessage = ''
+      hyphen = ''
+      
+    } else {
+      
+      if (!Util_.isString(userMessage)) {
+        throw new Error(functionName + ' - second arg not a string')
+      }
+    }
+    
+    return {
+      hyphen: hyphen,
+      userMessage: userMessage
+    }
+  }  
 } // handleError()
 
 /**

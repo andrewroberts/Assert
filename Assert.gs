@@ -119,8 +119,12 @@ function handleError(config) {
     case HandleError.DISPLAY_FULL:
     
       // TODO - Shouldn't we be doing some of the error checking like below??
-      Dialog.init(config.log)
-      Dialog.show(userMessage, error.message)
+//      Dialog.init(config.log)
+//      Dialog.show(userMessage, error.message)
+
+      var ui = DocumentApp.getUi()
+      ui.alert(userMessage, error.message, ui.ButtonSet.OK)
+
       break
 
     case HandleError.DISPLAY_SHORT:

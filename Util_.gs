@@ -46,8 +46,8 @@ var Util_ = {
     return Util_.isObject(d) && Util_.objectToString(d) === '[object Date]';
   },
   isError: function(e) {
-    return isObject(e) &&
-      (objectToString(e) === '[object Error]' || e instanceof Error);
+    return Util_.isObject(e) &&
+      (Util_.objectToString(e) === '[object Error]' || e instanceof Error);
   },
   isFunction: function(arg) {
     return typeof arg === 'function';

@@ -100,13 +100,11 @@ function handleError(config) {
     'fileName: ' + error.fileName + ' - ' + 
     'lineNumber: ' + error.lineNumber + ' - ' +     
     'stack: ' + error.stack     
-    
-  if (typeof log !== 'undefined') { 
-    log.severe(fullErrorMessage)
-  }
+
+  console.log(fullErrorMessage)
+  if (log) log.severe(fullErrorMessage)
   
   if (config.sendErrorEmail) {
-    
     MailApp.sendEmail(
       config.emailAddress, 
       'Error thrown in ' + config.scriptName + ', ' + 
